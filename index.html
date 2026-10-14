@@ -219,6 +219,19 @@ footer .legal{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);
 .proc i{display:block;width:46px;height:46px;margin:0 auto 14px;border:4px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:rot .8s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 
+/* poker */
+.pk{width:min(640px,100%)}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 10px}
+.cardw{display:flex;flex-direction:column;gap:6px}
+.card5{aspect-ratio:5/7;border-radius:10px;background:#fff;color:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:clamp(22px,5vw,38px);line-height:1;border:3px solid transparent;position:relative;padding:0;transition:transform .15s,border-color .15s}
+.card5.red{color:#d90429}
+.card5 small{font-size:.7em;margin-top:4px}
+.card5.back{background:repeating-linear-gradient(45deg,#0b8a52 0 8px,#06603a 8px 16px);color:transparent;border-color:var(--gold)}
+.card5.held{border-color:var(--gold);transform:translateY(-8px);box-shadow:0 0 18px rgba(245,197,66,.6)}
+.hold{min-height:24px;text-align:center;font-size:12px;font-weight:800;letter-spacing:1px;color:var(--gold)}
+.paytbl{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;font-size:12px;color:var(--muted);margin:8px 0 12px}
+.paytbl div{display:flex;justify-content:space-between;padding:2px 0}
+.paytbl .hit{color:var(--gold);font-weight:800}
 /* responsive */
 @media(max-width:1100px){.games,.cats{grid-template-columns:repeat(4,1fr)}.hero .grid{grid-template-columns:1fr;padding:40px 28px}.promos{grid-template-columns:1fr 1fr}.promos .p1{grid-column:1/-1}}
 @media(max-width:820px){nav.main{display:none}.header-spacer{flex:1}.two{grid-template-columns:1fr}footer .cols{grid-template-columns:1fr 1fr}.hdr-actions .ghost{display:none}.cats{grid-template-columns:repeat(3,1fr)}}
@@ -358,6 +371,14 @@ footer .legal{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);
   </div>
 </div></footer>
 
+<div class="modal" id="m-poker" role="dialog" aria-modal="true" aria-labelledby="pt"><div class="box pk">
+  <div class="bar"><h3 id="pt">Pepo Video Poker</h3><button class="x" data-close aria-label="Close">✕</button></div>
+  <div class="paytbl" id="ptbl"></div>
+  <div class="cards" id="pcards"></div>
+  <div class="hud"><span>Balance<b class="num" id="pbal">0</b></span><span>Bet<b class="num">10</b></span></div>
+  <div class="msg" id="pmsg">Place your bet and deal</div>
+  <button class="btn gold" id="pdeal">DEAL</button>
+</div></div>
 <!-- demo slot modal -->
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
   <div class="box">
@@ -421,7 +442,9 @@ const games=[
  ['Crystal<br>Caverns','Yggdrasil','','96.4','g11'],
  ['Wolf<br>Legend','Pragmatic Play','','96.0','g12'],
  ['Samba<br>Nights','Playtech','new','96.7','g6'],
- ['Pepo<br>Poker','Pepo Originals','','98.0','g7'],
+ ['Pepo<br>Poker','Pepo Originals','hot','98.0','g7'],
+ ['Jacks or<br>Better','Pepo Originals','new','99.5','g3'],
+ ['Video Poker<br>Deluxe','Microgaming','','98.9','g12'],
  ['Thunder<br>Gods','Hacksaw','','96.2','g10'],
  ['Candy<br>Jackpot','NetEnt','','96.5','g4']
 ];
@@ -458,7 +481,7 @@ setInterval(()=>{toast(`<b>${rnd(names)}</b> just won <b>$${fmt(1000+Math.random
 
 /* wallet */
 let bal=0,user=null;
-const setBal=()=>{$('#bal').textContent=fmt(bal);$('#hbal').textContent=fmt(bal)};
+const setBal=()=>{$('#bal').textContent=fmt(bal);$('#hbal').textContent=fmt(bal);$('#pbal').textContent=fmt(bal)};
 const open=id=>{document.getElementById(id).classList.add('open')};
 const closeAll=()=>document.querySelectorAll('.modal').forEach(m=>m.classList.remove('open'));
 document.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>open(b.dataset.m==='dep'&&user?'m-dep':'m-login')));
@@ -495,7 +518,8 @@ let busy=false;
 const modal=$('#modal');
 function openM(e){
   if(!user){open('m-login');return}
-  const t=e.currentTarget.querySelector('.info b');if(t)$('#mt').textContent=t.textContent;modal.classList.add('open');$('#spin').focus()}
+  const t=e.currentTarget.querySelector('.info b');
+  if(t&&/Poker/i.test(t.textContent)){open('m-poker');renderP();return}if(t)$('#mt').textContent=t.textContent;modal.classList.add('open');$('#spin').focus()}
 document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',openM));
 $('#close').onclick=closeAll;
 $('#spin').onclick=()=>{
@@ -514,6 +538,54 @@ $('#spin').onclick=()=>{
   },900);
 };
 setBal();
+
+/* video poker (Jacks or Better) */
+const PAY=[['Royal Flush',250],['Straight Flush',50],['Four of a Kind',25],['Full House',9],['Flush',6],['Straight',4],['Three of a Kind',3],['Two Pair',2],['Jacks or Better',1]];
+const RK='23456789TJQKA',SU='♠♥♦♣',BET=10;
+let deck=[],hand=[],held=[],phase='bet',last=null;
+const lab=r=>r==='T'?'10':r;
+function newDeck(){deck=[];for(const s of SU)for(const r of RK)deck.push(r+s);for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}}
+function evalHand(h){
+  const v=h.map(c=>RK.indexOf(c[0])).sort((a,b)=>a-b),su=h.map(c=>c[1]);
+  const flush=su.every(x=>x===su[0]);
+  const wheel=v.join()==='0,1,2,3,12';
+  const str=wheel||v.every((x,i)=>i===0||x===v[i-1]+1);
+  const cnt={};v.forEach(x=>cnt[x]=(cnt[x]||0)+1);
+  const g=Object.entries(cnt).map(([k,n])=>[n,+k]).sort((a,b)=>b[0]-a[0]||b[1]-a[1]);
+  if(str&&flush)return v[0]===8?'Royal Flush':'Straight Flush';
+  if(g[0][0]===4)return'Four of a Kind';
+  if(g[0][0]===3&&g[1][0]===2)return'Full House';
+  if(flush)return'Flush';
+  if(str)return'Straight';
+  if(g[0][0]===3)return'Three of a Kind';
+  if(g[0][0]===2&&g[1][0]===2)return'Two Pair';
+  if(g[0][0]===2&&g[0][1]>=9)return'Jacks or Better';
+  return null;
+}
+function renderP(){
+  $('#ptbl').innerHTML=PAY.map(([n,m])=>`<div class="${last===n?'hit':''}"><span>${n}</span><span>${m*BET}</span></div>`).join('');
+  $('#pcards').innerHTML=(hand.length?hand:[0,1,2,3,4]).map((c,i)=>{
+    if(!hand.length)return`<div class="cardw"><div class="card5 back"></div><div class="hold"></div></div>`;
+    const red=c[1]==='♥'||c[1]==='♦';
+    return`<div class="cardw"><button class="card5 ${red?'red':''} ${held[i]?'held':''}" data-i="${i}" aria-label="${lab(c[0])} of ${c[1]}${held[i]?', held':''}" ${phase==='hold'?'':'disabled'}>${lab(c[0])}<small>${c[1]}</small></button><div class="hold">${held[i]?'HELD':''}</div></div>`}).join('');
+  $('#pdeal').textContent=phase==='hold'?'DRAW':'DEAL';
+}
+$('#pcards').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b||phase!=='hold')return;held[b.dataset.i]=!held[b.dataset.i];renderP()});
+$('#pdeal').onclick=()=>{
+  if(phase!=='hold'){
+    if(bal<BET){closeAll();open('m-dep');return}
+    bal-=BET;setBal();newDeck();hand=Array.from({length:5},()=>deck.pop());held=[false,false,false,false,false];phase='hold';last=null;
+    $('#pmsg').textContent='Tap cards to HOLD, then draw';
+  }else{
+    hand=hand.map((c,i)=>held[i]?c:deck.pop());phase='bet';
+    const r=evalHand(hand);last=r;
+    if(r){const w=PAY.find(p=>p[0]===r)[1]*BET;bal+=w;$('#pmsg').textContent=r.toUpperCase()+'! +$'+fmt(w)}
+    else $('#pmsg').textContent='No win. Deal again';
+    setBal();held=[true,true,true,true,true].map(()=>false);
+  }
+  renderP();
+};
+renderP();
 </script>
 </body>
 </html>
