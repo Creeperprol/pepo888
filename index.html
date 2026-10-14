@@ -132,6 +132,9 @@ section{margin-top:56px}
 .g7{background:linear-gradient(160deg,#9ef01a,#1b5e20)}.g8{background:linear-gradient(160deg,#ff70a6,#5a189a)}
 .g9{background:linear-gradient(160deg,#ffd60a,#d00000)}.g10{background:linear-gradient(160deg,#48cae4,#0b525b)}
 .g11{background:linear-gradient(160deg,#e0aaff,#240046)}.g12{background:linear-gradient(160deg,#c9ada7,#22223b)}
+.g13{background:linear-gradient(160deg,#ffb703,#023047)}.g14{background:linear-gradient(160deg,#06d6a0,#073b4c)}
+.g15{background:linear-gradient(160deg,#ef476f,#26004d)}.g16{background:linear-gradient(160deg,#caffbf,#006d77)}
+.g17{background:linear-gradient(160deg,#fb8500,#3d0066)}.g18{background:linear-gradient(160deg,#a8dadc,#1d3557)}
 
 /* promos */
 .promos{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px}
@@ -361,7 +364,25 @@ const games=[
  ['Pharaoh\'s<br>Gold','Push Gaming','','96.2','g12'],
  ['Ocean<br>Riches','Microgaming','','96.7','g5'],
  ['Diamond<br>Rush','Red Tiger','new','96.3','g11'],
- ['Tiger<br>888','Pepo Originals','hot','97.1','g10']
+ ['Tiger<br>888','Pepo Originals','hot','97.1','g10'],
+ ['Cleopatra\'s<br>Riches','IGT','','96.0','g13'],
+ ['Jade<br>Dynasty','Pepo Originals','new','96.9','g14'],
+ ['Vampire<br>Night','Hacksaw','','96.2','g15'],
+ ['Lucky<br>Clover','Pragmatic Play','','96.6','g16'],
+ ['Blazing<br>Hot 888','Pepo Originals','hot','97.2','g17'],
+ ['Polar<br>Fortune','Play\'n GO','','96.1','g18'],
+ ['Gold<br>Rush','NetEnt','','96.5','g1'],
+ ['Sakura<br>Spin','Red Tiger','new','96.8','g8'],
+ ['Pirate\'s<br>Bounty','Push Gaming','','96.3','g5'],
+ ['Cash<br>Cascade','Pepo Originals','','97.4','g2'],
+ ['Royal<br>Blackjack','Evolution','','99.5','g3'],
+ ['Mega<br>Moolah 888','Microgaming','hot','95.8','g9'],
+ ['Crystal<br>Caverns','Yggdrasil','','96.4','g11'],
+ ['Wolf<br>Legend','Pragmatic Play','','96.0','g12'],
+ ['Samba<br>Nights','Playtech','new','96.7','g6'],
+ ['Pepo<br>Poker','Pepo Originals','','98.0','g7'],
+ ['Thunder<br>Gods','Hacksaw','','96.2','g10'],
+ ['Candy<br>Jackpot','NetEnt','','96.5','g4']
 ];
 $('#games').innerHTML=games.map(g=>`
  <button class="game" data-open="game" aria-label="Play ${g[0].replace('<br>',' ')}">
